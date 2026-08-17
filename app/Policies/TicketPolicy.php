@@ -4,12 +4,13 @@ namespace App\Policies;
 
 use App\Models\Ticket;
 use App\Models\User;
+use App\Enums\TicketStatus;
 
 class TicketPolicy
 {
     public function before(User $user, string $ability): bool|null
     {
-        if ($user->isAdmin()) {
+        if ($user->isAdmin() && $ability !== 'comment') {
             return true;
         }
 
@@ -26,4 +27,19 @@ class TicketPolicy
         return $user->isTechnician()
             && $ticket->assigned_to === $user->id;
     }
+
+    public function comment(User $user, Ticket $ticket): bool
+    {
+        if ($ticket->status === TicketStatus::CLOSED) {
+            return false;
+        }
+
+        return $user->isAdmin()
+            || $ticket->user_id === $user->id
+            || (
+                $user->isTechnician()
+                && $ticket->assigned_to === $user->id
+            );
+    }
+
 }

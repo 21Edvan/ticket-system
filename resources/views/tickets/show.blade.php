@@ -17,16 +17,18 @@
                 href="{{ route('tickets.index') }}"
                 class="text-sm text-gray-600 hover:text-gray-900 hover:underline"
             >
-                Volver a mis tickets
+                Volver a tickets
             </a>
 
         </div>
     </x-slot>
 
+
     <div class="py-12">
 
-        <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+        <div class="mx-auto max-w-5xl space-y-8 sm:px-6 lg:px-8">
 
+            {{-- Información del ticket --}}
             <div class="overflow-hidden bg-white shadow-xl sm:rounded-lg">
 
                 <div class="p-6">
@@ -45,6 +47,7 @@
                             </p>
                         </div>
 
+
                         {{-- Prioridad --}}
                         <div>
                             <p class="text-sm font-medium text-gray-500">
@@ -52,6 +55,7 @@
                             </p>
 
                             <p class="mt-1">
+
                                 <span @class([
                                     'rounded-full px-3 py-1 text-xs font-semibold',
 
@@ -69,8 +73,10 @@
                                 ])>
                                     {{ $ticket->priority->label() }}
                                 </span>
+
                             </p>
                         </div>
+
 
                         {{-- Estado --}}
                         <div>
@@ -79,6 +85,7 @@
                             </p>
 
                             <p class="mt-1">
+
                                 <span @class([
                                     'rounded-full px-3 py-1 text-xs font-semibold',
 
@@ -102,8 +109,10 @@
                                 ])>
                                     {{ $ticket->status->label() }}
                                 </span>
+
                             </p>
                         </div>
+
 
                         {{-- Fecha --}}
                         <div>
@@ -118,7 +127,9 @@
 
                     </div>
 
+
                     <hr class="my-8">
+
 
                     {{-- Descripción --}}
                     <div>
@@ -133,33 +144,41 @@
 
                     </div>
 
+
                     <hr class="my-8">
+
 
                     {{-- Personas --}}
                     <div class="grid gap-6 md:grid-cols-2">
 
+                        {{-- Reportado por --}}
                         <div>
+
                             <p class="text-sm font-medium text-gray-500">
                                 Reportado por
                             </p>
 
-                            <p class="mt-1 font-semibold">
+                            <p class="mt-1 font-semibold text-gray-900">
                                 {{ $ticket->user->name }}
                             </p>
 
                             <p class="text-sm text-gray-500">
                                 {{ $ticket->user->email }}
                             </p>
+
                         </div>
 
+
+                        {{-- Técnico --}}
                         <div>
+
                             <p class="text-sm font-medium text-gray-500">
                                 Técnico asignado
                             </p>
 
                             @if ($ticket->technician)
 
-                                <p class="mt-1 font-semibold">
+                                <p class="mt-1 font-semibold text-gray-900">
                                     {{ $ticket->technician->name }}
                                 </p>
 
@@ -180,41 +199,46 @@
                     </div>
 
                 </div>
-                @if (auth()->user()->isAdmin())
 
-                <div class="mt-8">
+            </div>
 
-                    <livewire:tickets.assign-technician
-                        :ticket="$ticket"
-                        :key="'assign-'.$ticket->id"
-                    />
 
-                </div>
+            {{-- Administración del ticket --}}
+            @if (auth()->user()->isAdmin())
+
+                <livewire:tickets.assign-technician
+                    :ticket="$ticket"
+                    :key="'assign-'.$ticket->id"
+                />
 
             @endif
 
-            </div>
+
+            {{-- Cambio de estado --}}
+            @if (
+                auth()->user()->isAdmin()
+                || (
+                    auth()->user()->isTechnician()
+                    && $ticket->assigned_to === auth()->id()
+                )
+            )
+
+                <livewire:tickets.change-ticket-status
+                    :ticket="$ticket"
+                    :key="'status-'.$ticket->id"
+                />
+
+            @endif
 
         </div>
 
     </div>
 
-    @if (
-        auth()->user()->isAdmin()
-        || (
-            auth()->user()->isTechnician()
-            && $ticket->assigned_to === auth()->id()
-        )
-    )
 
-        <div class="mt-8">
+    {{-- Chat flotante --}}
+    <livewire:tickets.ticket-comments
+        :ticket="$ticket"
+        :key="'comments-'.$ticket->id"
+    />
 
-            <livewire:tickets.change-ticket-status
-                :ticket="$ticket"
-                :key="'status-'.$ticket->id"
-            />
-
-        </div>
-
-    @endif
 </x-app-layout>

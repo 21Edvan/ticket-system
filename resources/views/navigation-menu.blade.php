@@ -138,6 +138,14 @@
                             Usuarios
                         </x-nav-link>
 
+                         {{-- Reportes --}}
+                        <x-nav-link
+                            href="{{ route('admin.reports.index') }}"
+                            :active="request()->routeIs('admin.reports.*')"
+                        >
+                            Reportes
+                        </x-nav-link>
+
 
                         {{-- Personalización --}}
                         <x-nav-link
@@ -591,6 +599,14 @@
                     Usuarios
                 </x-responsive-nav-link>
 
+
+                 {{-- Usuarios --}}
+                 <x-responsive-nav-link
+                    href="{{ route('admin.reports.index') }}"
+                    :active="request()->routeIs('admin.reports.*')"
+                >
+                    Reportes
+                </x-responsive-nav-link>
 
                 {{-- Personalización --}}
                 <x-responsive-nav-link

@@ -59,4 +59,9 @@ Route::middleware([
         'admin.branding'
     )->name('admin.branding.edit');
 
+    Route::view(
+        '/admin/reports',
+        'admin.reports'
+    )->name('admin.reports.index');
+
 });

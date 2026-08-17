@@ -199,4 +199,22 @@
 
     </div>
 
+    @if (
+        auth()->user()->isAdmin()
+        || (
+            auth()->user()->isTechnician()
+            && $ticket->assigned_to === auth()->id()
+        )
+    )
+
+        <div class="mt-8">
+
+            <livewire:tickets.change-ticket-status
+                :ticket="$ticket"
+                :key="'status-'.$ticket->id"
+            />
+
+        </div>
+
+    @endif
 </x-app-layout>

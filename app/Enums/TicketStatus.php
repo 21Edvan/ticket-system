@@ -22,4 +22,33 @@ enum TicketStatus: string
             self::CLOSED => 'Cerrado',
         };
     }
+    public function allowedTransitions(): array
+    {
+        return match ($this) {
+            self::OPEN => [
+                self::ASSIGNED,
+            ],
+
+            self::ASSIGNED => [
+                self::IN_PROGRESS,
+            ],
+
+            self::IN_PROGRESS => [
+                self::WAITING,
+                self::RESOLVED,
+            ],
+
+            self::WAITING => [
+                self::IN_PROGRESS,
+                self::RESOLVED,
+            ],
+
+            self::RESOLVED => [
+                self::IN_PROGRESS,
+                self::CLOSED,
+            ],
+
+            self::CLOSED => [],
+        };
+    }
 }

@@ -127,7 +127,7 @@
 
                     </div>
 
-
+                    
                     <hr class="my-8">
 
 
@@ -199,6 +199,10 @@
                     </div>
 
                 </div>
+                <livewire:tickets.ticket-activity
+                    :ticket="$ticket"
+                    :key="'activity-'.$ticket->id"
+                />
 
             </div>
 

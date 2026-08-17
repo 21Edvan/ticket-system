@@ -60,6 +60,8 @@ class ChangeTicketStatus extends Component
 
         $this->status = $ticket->status->value;
 
+        $this->dispatch('ticket-activity-updated');
+
         session()->flash(
             'status_success',
             'Estado actualizado correctamente.'

@@ -50,6 +50,7 @@ class AssignTechnician extends Component
         $this->ticket->save();
 
         $this->ticket->refresh();
+        $this->dispatch('ticket-activity-updated');
 
         session()->flash(
             'assignment_success',

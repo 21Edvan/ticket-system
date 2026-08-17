@@ -204,6 +204,11 @@
                     :key="'activity-'.$ticket->id"
                 />
 
+                @include(
+                    'tickets.partials.attachments',
+                    ['ticket' => $ticket]
+                )
+
             </div>
 
 

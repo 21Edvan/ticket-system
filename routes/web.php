@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TicketAttachmentController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -37,6 +38,9 @@ Route::middleware(['auth'])->group(function () {
     Route::view('/tickets/create', 'tickets.create')->name('tickets.create');
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show')->can('view', 'ticket');
     
+    Route::get('/attachments/{attachment}',[TicketAttachmentController::class, 'show'])->name('attachments.show');
+
+    Route::get('/attachments/{attachment}/download',[TicketAttachmentController::class, 'download'])->name('attachments.download');
 
 });
 

@@ -100,4 +100,12 @@ class User extends Authenticatable
     {
         return $this->hasMany(TicketComment::class);
     }
+
+    public function uploadedAttachments(): HasMany
+    {
+        return $this->hasMany(
+            TicketAttachment::class,
+            'uploaded_by'
+        );
+    }
 }

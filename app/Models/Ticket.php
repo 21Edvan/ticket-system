@@ -57,4 +57,15 @@ class Ticket extends Model
     {
         return $this->hasMany(TicketHistory::class);
     }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class);
+    }
+
+    public function directAttachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class)
+            ->whereNull('ticket_comment_id');
+    }
 }

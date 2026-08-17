@@ -4,34 +4,64 @@ namespace App\Livewire\Tickets;
 
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Ticket;
+use App\Models\User;
+use App\Notifications\TicketNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
-use App\Enums\UserRole;
-use App\Models\User;
-use App\Notifications\TicketNotification;
-use Illuminate\Support\Facades\Notification;
+use Livewire\WithFileUploads;
+use RuntimeException;
+use Throwable;
 
 class CreateTicket extends Component
 {
+    use WithFileUploads;
+
     public string $category_id = '';
+
     public string $title = '';
+
     public string $description = '';
+
     public string $priority = 'medium';
 
-    public ?string $createdTicketNumber = null;
+    public array $attachments = [];
 
-    protected function rules(): array
+    public function removeAttachment(int $index): void
     {
-        return [
+        if (! isset($this->attachments[$index])) {
+            return;
+        }
+
+        unset($this->attachments[$index]);
+
+        $this->attachments = array_values(
+            $this->attachments
+        );
+
+        $this->resetValidation('attachments');
+        $this->resetValidation('attachments.*');
+    }
+
+    public function save()
+    {
+        $validated = $this->validate([
             'category_id' => [
                 'required',
-                'integer',
                 Rule::exists('categories', 'id')
-                    ->where('is_active', true),
+                    ->where(
+                        fn ($query) => $query->where(
+                            'is_active',
+                            true
+                        )
+                    ),
             ],
 
             'title' => [
@@ -51,68 +81,201 @@ class CreateTicket extends Component
                 'required',
                 Rule::enum(TicketPriority::class),
             ],
-        ];
-    }
 
-    public function save(): void
-    {
-        $validated = $this->validate();
+            'attachments' => [
+                'array',
+                'max:5',
+            ],
 
-        $ticket = Ticket::create([
-            'ticket_number' => $this->generateTicketNumber(),
+            'attachments.*' => [
+                'file',
+                'mimes:jpg,jpeg,png,webp,pdf,doc,docx,xls,xlsx,txt',
+                'max:10240',
+            ],
+        ], [
+            'attachments.max' =>
+                'Puedes adjuntar un máximo de 5 archivos.',
 
-            'user_id' => Auth::id(),
+            'attachments.*.file' =>
+                'Uno de los archivos seleccionados no es válido.',
 
-            'category_id' => $validated['category_id'],
+            'attachments.*.mimes' =>
+                'Solo se permiten imágenes, PDF, Word, Excel y archivos de texto.',
 
-            'assigned_to' => null,
-
-            'title' => $validated['title'],
-
-            'description' => $validated['description'],
-
-            'priority' => TicketPriority::from(
-                $validated['priority']
-            ),
-
-            'status' => TicketStatus::OPEN,
+            'attachments.*.max' =>
+                'Cada archivo puede pesar como máximo 10 MB.',
         ]);
 
-        $admins = User::query()
-            ->where('role', UserRole::ADMIN->value)
-            ->where('id', '!=', Auth::id())
-            ->get();
+        $storedPaths = [];
 
-        Notification::send(
-            $admins,
-            new TicketNotification(
-                ticket: $ticket,
-                kind: 'ticket_created',
-                title: 'Nuevo ticket',
-                message: "Se creó el ticket {$ticket->ticket_number}: {$ticket->title}",
-            )
+        DB::beginTransaction();
+
+        try {
+
+            $ticket = Ticket::create([
+                'ticket_number' => $this->generateTicketNumber(),
+
+                'user_id' => Auth::id(),
+
+                'category_id' => $validated['category_id'],
+
+                'assigned_to' => null,
+
+                'title' => $validated['title'],
+
+                'description' => $validated['description'],
+
+                'priority' => TicketPriority::from(
+                    $validated['priority']
+                ),
+
+                'status' => TicketStatus::OPEN,
+            ]);
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guardar adjuntos
+            |--------------------------------------------------------------------------
+            */
+
+            foreach ($this->attachments as $file) {
+
+                $extension = strtolower(
+                    $file->getClientOriginalExtension()
+                );
+
+                $storedName = (string) Str::uuid();
+
+                if ($extension !== '') {
+                    $storedName .= '.'.$extension;
+                }
+
+                $path = $file->storeAs(
+                    path: "tickets/{$ticket->id}",
+                    name: $storedName,
+                    options: 'attachments',
+                );
+
+                if (! $path) {
+                    throw new RuntimeException(
+                        'No se pudo almacenar uno de los archivos.'
+                    );
+                }
+
+                $storedPaths[] = $path;
+
+                $ticket->attachments()->create([
+                    'ticket_comment_id' => null,
+
+                    'uploaded_by' => Auth::id(),
+
+                    'original_name' =>
+                        $file->getClientOriginalName(),
+
+                    'path' => $path,
+
+                    'mime_type' => $file->getMimeType(),
+
+                    'size' => $file->getSize(),
+                ]);
+            }
+
+
+            DB::commit();
+
+        } catch (Throwable $exception) {
+
+            DB::rollBack();
+
+            foreach ($storedPaths as $path) {
+                Storage::disk('attachments')
+                    ->delete($path);
+            }
+
+            report($exception);
+
+            $this->addError(
+                'attachments',
+                'No se pudo crear el ticket. Inténtalo nuevamente.'
+            );
+
+            return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Notificar administradores
+        |--------------------------------------------------------------------------
+        */
+
+        try {
+
+            $admins = User::query()
+                ->where(
+                    'role',
+                    UserRole::ADMIN->value
+                )
+                ->where(
+                    'id',
+                    '!=',
+                    Auth::id()
+                )
+                ->get();
+
+            Notification::send(
+                $admins,
+                new TicketNotification(
+                    ticket: $ticket,
+                    kind: 'ticket_created',
+                    title: 'Nuevo ticket',
+                    message:
+                        "Se creó el ticket {$ticket->ticket_number}: {$ticket->title}",
+                )
+            );
+
+        } catch (Throwable $exception) {
+
+            /*
+             * Si falla una notificación,
+             * el ticket ya está creado y no debe perderse.
+             */
+            report($exception);
+        }
+
+
+        session()->flash(
+            'success',
+            'Ticket creado correctamente.'
         );
 
-        $this->createdTicketNumber = $ticket->ticket_number;
-
-        $this->reset([
-            'category_id',
-            'title',
-            'description',
-        ]);
-
-        $this->priority = TicketPriority::MEDIUM->value;
+        return $this->redirect(
+            route(
+                'tickets.show',
+                $ticket
+            ),
+            navigate: true
+        );
     }
 
     private function generateTicketNumber(): string
     {
         do {
-            $ticketNumber = 'TCK-'
+
+            $ticketNumber =
+                'TCK-'
                 .now()->format('Ymd')
                 .'-'
-                .Str::upper(Str::random(6));
+                .Str::upper(
+                    Str::random(6)
+                );
+
         } while (
-            Ticket::where('ticket_number', $ticketNumber)->exists()
+            Ticket::where(
+                'ticket_number',
+                $ticketNumber
+            )->exists()
         );
 
         return $ticketNumber;
@@ -120,13 +283,16 @@ class CreateTicket extends Component
 
     public function render()
     {
-        return view('livewire.tickets.create-ticket', [
-            'categories' => Category::query()
-                ->where('is_active', true)
-                ->orderBy('name')
-                ->get(),
+        return view(
+            'livewire.tickets.create-ticket',
+            [
+                'categories' => Category::query()
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(),
 
-            'priorities' => TicketPriority::cases(),
-        ]);
+                'priorities' => TicketPriority::cases(),
+            ]
+        );
     }
 }

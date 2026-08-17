@@ -7,9 +7,17 @@ use App\Models\Ticket;
 use App\Models\TicketHistory;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class TicketObserver
 {
+
+    public function deleted(Ticket $ticket): void
+    {
+        Storage::disk('attachments')
+            ->deleteDirectory("tickets/{$ticket->id}");
+    }
+
     public function created(Ticket $ticket): void
     {
         TicketHistory::create([

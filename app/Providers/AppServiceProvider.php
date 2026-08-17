@@ -9,6 +9,9 @@ use App\Models\TicketAttachment;
 use App\Models\TicketComment;
 use App\Observers\TicketAttachmentObserver;
 use App\Observers\TicketCommentObserver;
+use App\Models\CompanySetting;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,5 +36,11 @@ class AppServiceProvider extends ServiceProvider
         TicketAttachment::observe(
             TicketAttachmentObserver::class
         );
+        if (Schema::hasTable('company_settings')) {
+            View::share(
+                'company',
+                CompanySetting::current()
+            );
+        }
     }
 }

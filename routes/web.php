@@ -54,4 +54,9 @@ Route::middleware([
         'admin.users'
     )->name('admin.users.index');
 
+    Route::view(
+        '/admin/settings/branding',
+        'admin.branding'
+    )->name('admin.branding.edit');
+
 });

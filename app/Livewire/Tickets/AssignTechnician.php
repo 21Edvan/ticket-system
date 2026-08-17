@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Notifications\TicketNotification;
 
 class AssignTechnician extends Component
 {
@@ -21,6 +22,7 @@ class AssignTechnician extends Component
         abort_unless(Auth::user()->isAdmin(), 403);
 
         $this->ticket = $ticket;
+
 
         $this->technician_id = $ticket->assigned_to
             ? (string) $ticket->assigned_to
@@ -41,6 +43,7 @@ class AssignTechnician extends Component
             ],
         ]);
 
+        $previousTechnicianId = $this->ticket->assigned_to;
         $this->ticket->assigned_to = $validated['technician_id'];
 
         if ($this->ticket->status === TicketStatus::OPEN) {
@@ -50,6 +53,31 @@ class AssignTechnician extends Component
         $this->ticket->save();
 
         $this->ticket->refresh();
+
+        $newTechnician = $this->ticket->technician;
+
+        if ($newTechnician) {
+            $newTechnician->notify(
+                new TicketNotification(
+                    ticket: $this->ticket,
+                    kind: 'ticket_assigned',
+                    title: 'Ticket asignado',
+                    message: "Se te asignó el ticket {$this->ticket->ticket_number}.",
+                )
+            );
+        }
+
+        $this->ticket->user->notify(
+            new TicketNotification(
+                ticket: $this->ticket,
+                kind: 'technician_assigned',
+                title: 'Técnico asignado',
+                message: $newTechnician
+                    ? "{$newTechnician->name} fue asignado a tu ticket {$this->ticket->ticket_number}."
+                    : "Se actualizó la asignación de tu ticket {$this->ticket->ticket_number}.",
+            )
+        );
+
         $this->dispatch('ticket-activity-updated');
 
         session()->flash(

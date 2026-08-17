@@ -10,6 +10,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use App\Enums\UserRole;
+use App\Models\User;
+use App\Notifications\TicketNotification;
+use Illuminate\Support\Facades\Notification;
 
 class CreateTicket extends Component
 {
@@ -73,6 +77,21 @@ class CreateTicket extends Component
 
             'status' => TicketStatus::OPEN,
         ]);
+
+        $admins = User::query()
+            ->where('role', UserRole::ADMIN->value)
+            ->where('id', '!=', Auth::id())
+            ->get();
+
+        Notification::send(
+            $admins,
+            new TicketNotification(
+                ticket: $ticket,
+                kind: 'ticket_created',
+                title: 'Nuevo ticket',
+                message: "Se creó el ticket {$ticket->ticket_number}: {$ticket->title}",
+            )
+        );
 
         $this->createdTicketNumber = $ticket->ticket_number;
 

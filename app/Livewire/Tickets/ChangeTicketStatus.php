@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
+use App\Notifications\TicketNotification;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 class ChangeTicketStatus extends Component
 {
@@ -44,6 +47,7 @@ class ChangeTicketStatus extends Component
 
         $newStatus = TicketStatus::from($validated['status']);
 
+        $oldStatus = $ticket->status;
         $ticket->status = $newStatus;
 
         if ($newStatus === TicketStatus::RESOLVED) {
@@ -57,6 +61,30 @@ class ChangeTicketStatus extends Component
         }
 
         $ticket->save();
+
+        $recipients = collect([
+            $ticket->user,
+            $ticket->technician,
+        ])
+            ->filter()
+            ->unique('id')
+            ->reject(
+                fn ($user) => $user->id === Auth::id()
+            );
+
+        Notification::send(
+            $recipients,
+            new TicketNotification(
+                ticket: $ticket,
+                kind: 'status_changed',
+                title: 'Estado actualizado',
+                message: "El ticket {$ticket->ticket_number} cambió de "
+                    .$oldStatus->label()
+                    .' a '
+                    .$newStatus->label()
+                    .'.',
+            )
+        );
 
         $this->status = $ticket->status->value;
 

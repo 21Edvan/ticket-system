@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 use App\Models\TicketRead;
+use App\Notifications\TicketNotification;
+use Illuminate\Support\Facades\Notification;
 
 class TicketComments extends Component
 {
@@ -52,6 +54,27 @@ class TicketComments extends Component
             'user_id' => Auth::id(),
             'body' => $validated['body'],
         ]);
+
+        $recipients = collect([
+            $ticket->user,
+            $ticket->technician,
+        ])
+            ->filter()
+            ->unique('id')
+            ->reject(
+                fn ($user) => $user->id === Auth::id()
+            );
+
+        Notification::send(
+            $recipients,
+            new TicketNotification(
+                ticket: $ticket,
+                kind: 'new_comment',
+                title: 'Nuevo comentario',
+                message: Auth::user()->name
+                    ." respondió en {$ticket->ticket_number}.",
+            )
+        );
 
         $this->lastCommentId = $comment->id;
 

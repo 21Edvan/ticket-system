@@ -39,3 +39,15 @@ Route::middleware(['auth'])->group(function () {
     
 
 });
+
+Route::middleware([
+    'auth',
+    'role:admin',
+])->group(function () {
+
+    Route::view(
+        '/admin/users',
+        'admin.users'
+    )->name('admin.users.index');
+
+});

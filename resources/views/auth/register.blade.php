@@ -1,60 +1,339 @@
 <x-guest-layout>
-    <x-authentication-card>
-        <x-slot name="logo">
-            <x-authentication-card-logo />
-        </x-slot>
 
-        <x-validation-errors class="mb-4" />
+    <div>
 
-        <form method="POST" action="{{ route('register') }}">
+        {{-- ============================================================
+            ENCABEZADO
+        ============================================================ --}}
+        <div class="mb-7">
+
+            <p
+                class="
+                    text-sm
+                    font-semibold
+                    uppercase
+                    tracking-wider
+                "
+                style="
+                    color:
+                    {{ $company->primary_color ?? '#4F46E5' }};
+                "
+            >
+                {{ $company->company_name }}
+            </p>
+
+            <h1
+                class="
+                    mt-2
+                    text-3xl
+                    font-bold
+                    tracking-tight
+                    text-gray-900
+                "
+            >
+                Crear cuenta
+            </h1>
+
+            <p class="mt-2 text-sm leading-6 text-gray-500">
+                Regístrate para acceder a
+                {{ $company->system_name }}.
+            </p>
+
+        </div>
+
+
+        <x-validation-errors class="mb-5" />
+
+
+        <form
+            method="POST"
+            action="{{ route('register') }}"
+            class="space-y-4"
+        >
             @csrf
 
+
+            {{-- Nombre --}}
             <div>
-                <x-label for="name" value="{{ __('Name') }}" />
-                <x-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus autocomplete="name" />
+
+                <label
+                    for="name"
+                    class="
+                        block
+                        text-sm
+                        font-medium
+                        text-gray-700
+                    "
+                >
+                    Nombre completo
+                </label>
+
+                <input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value="{{ old('name') }}"
+                    required
+                    autofocus
+                    autocomplete="name"
+
+                    class="
+                        brand-focus
+                        mt-2
+                        block
+                        w-full
+                        rounded-lg
+                        border-gray-300
+                        px-4
+                        py-3
+                        text-sm
+                        shadow-sm
+                    "
+                >
+
             </div>
 
-            <div class="mt-4">
-                <x-label for="email" value="{{ __('Email') }}" />
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autocomplete="username" />
+
+            {{-- Email --}}
+            <div>
+
+                <label
+                    for="email"
+                    class="
+                        block
+                        text-sm
+                        font-medium
+                        text-gray-700
+                    "
+                >
+                    Correo electrónico
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
+                    autocomplete="username"
+
+                    placeholder="nombre@empresa.com"
+
+                    class="
+                        brand-focus
+                        mt-2
+                        block
+                        w-full
+                        rounded-lg
+                        border-gray-300
+                        px-4
+                        py-3
+                        text-sm
+                        shadow-sm
+                    "
+                >
+
             </div>
 
-            <div class="mt-4">
-                <x-label for="password" value="{{ __('Password') }}" />
-                <x-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
+
+            {{-- Password --}}
+            <div>
+
+                <label
+                    for="password"
+                    class="
+                        block
+                        text-sm
+                        font-medium
+                        text-gray-700
+                    "
+                >
+                    Contraseña
+                </label>
+
+                <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="new-password"
+
+                    class="
+                        brand-focus
+                        mt-2
+                        block
+                        w-full
+                        rounded-lg
+                        border-gray-300
+                        px-4
+                        py-3
+                        text-sm
+                        shadow-sm
+                    "
+                >
+
             </div>
 
-            <div class="mt-4">
-                <x-label for="password_confirmation" value="{{ __('Confirm Password') }}" />
-                <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
+
+            {{-- Confirmación --}}
+            <div>
+
+                <label
+                    for="password_confirmation"
+                    class="
+                        block
+                        text-sm
+                        font-medium
+                        text-gray-700
+                    "
+                >
+                    Confirmar contraseña
+                </label>
+
+                <input
+                    id="password_confirmation"
+                    type="password"
+                    name="password_confirmation"
+                    required
+                    autocomplete="new-password"
+
+                    class="
+                        brand-focus
+                        mt-2
+                        block
+                        w-full
+                        rounded-lg
+                        border-gray-300
+                        px-4
+                        py-3
+                        text-sm
+                        shadow-sm
+                    "
+                >
+
             </div>
 
-            @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
-                <div class="mt-4">
-                    <x-label for="terms">
-                        <div class="flex items-center">
-                            <x-checkbox name="terms" id="terms" required />
 
-                            <div class="ms-2">
-                                {!! __('I agree to the :terms_of_service and :privacy_policy', [
-                                        'terms_of_service' => '<a target="_blank" href="'.route('terms.show').'" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">'.__('Terms of Service').'</a>',
-                                        'privacy_policy' => '<a target="_blank" href="'.route('policy.show').'" class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">'.__('Privacy Policy').'</a>',
-                                ]) !!}
-                            </div>
-                        </div>
-                    </x-label>
+            {{-- Terms --}}
+            @if (
+                Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature()
+            )
+
+                <div class="pt-1">
+
+                    <label
+                        for="terms"
+                        class="
+                            flex
+                            items-start
+                            gap-2
+                        "
+                    >
+
+                        <input
+                            id="terms"
+                            name="terms"
+                            type="checkbox"
+                            required
+
+                            class="
+                                mt-1
+                                rounded
+                                border-gray-300
+                            "
+
+                            style="
+                                color:
+                                {{ $company->primary_color ?? '#4F46E5' }};
+                            "
+                        >
+
+
+                        <span class="text-sm leading-6 text-gray-600">
+
+                            Acepto los
+
+                            <a
+                                target="_blank"
+                                href="{{ route('terms.show') }}"
+                                class="brand-link font-medium"
+                            >
+                                términos de servicio
+                            </a>
+
+                            y la
+
+                            <a
+                                target="_blank"
+                                href="{{ route('policy.show') }}"
+                                class="brand-link font-medium"
+                            >
+                                política de privacidad
+                            </a>.
+
+                        </span>
+
+                    </label>
+
                 </div>
+
             @endif
 
-            <div class="flex items-center justify-end mt-4">
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('login') }}">
-                    {{ __('Already registered?') }}
+
+            <button
+                type="submit"
+
+                class="
+                    brand-button
+                    mt-2
+                    flex
+                    w-full
+                    items-center
+                    justify-center
+                    rounded-lg
+                    px-4
+                    py-3
+                    text-sm
+                    font-semibold
+                    shadow-sm
+                    transition
+                "
+            >
+                Crear cuenta
+            </button>
+
+        </form>
+
+
+        <div
+            class="
+                mt-7
+                border-t
+                border-gray-100
+                pt-6
+                text-center
+            "
+        >
+
+            <p class="text-sm text-gray-500">
+
+                ¿Ya tienes una cuenta?
+
+                <a
+                    href="{{ route('login') }}"
+                    class="
+                        brand-link
+                        ms-1
+                        font-semibold
+                    "
+                >
+                    Iniciar sesión
                 </a>
 
-                <x-button class="ms-4">
-                    {{ __('Register') }}
-                </x-button>
-            </div>
-        </form>
-    </x-authentication-card>
+            </p>
+
+        </div>
+
+    </div>
+
 </x-guest-layout>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class CompanySetting extends Model
 {
@@ -49,5 +50,18 @@ class CompanySetting extends Model
     {
         return static::query()->find(1)
             ?? new static(static::defaults());
+    }
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path
+            ? Storage::disk('public')->url($this->logo_path)
+            : null;
+    }
+
+    public function faviconUrl(): ?string
+    {
+        return $this->favicon_path
+            ? Storage::disk('public')->url($this->favicon_path)
+            : null;
     }
 }

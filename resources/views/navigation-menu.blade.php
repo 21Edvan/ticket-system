@@ -17,9 +17,46 @@
 
                     <a
                         href="{{ route('dashboard') }}"
-                        class="flex items-center gap-2"
+                        class="
+                            flex
+                            min-w-0
+                            items-center
+                            gap-3
+                        "
                     >
-                        <x-application-mark class="block h-9 w-auto" />
+
+                        <x-application-mark
+                            class="block h-9 w-auto shrink-0"
+                        />
+
+
+                        <div class="hidden min-w-0 lg:block">
+
+                            <p
+                                class="
+                                    max-w-[180px]
+                                    truncate
+                                    text-sm
+                                    font-bold
+                                    text-gray-900
+                                "
+                            >
+                                {{ $company->system_name }}
+                            </p>
+
+                            <p
+                                class="
+                                    max-w-[180px]
+                                    truncate
+                                    text-[10px]
+                                    text-gray-400
+                                "
+                            >
+                                {{ $company->company_name }}
+                            </p>
+
+                        </div>
+
                     </a>
 
                 </div>
